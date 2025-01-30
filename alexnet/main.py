@@ -20,7 +20,7 @@ def get_train_valid_loader(
 ): 
     normalize = transforms.Normalize(
         mean = [0.4914, 0.4822, 0.4465],
-        std = [0.2023, 0.1994, 0.2020],
+        std = [0.2023, 0.1994, 0.2020]
     ) #normalization values calculated for CIFAR10 datasets
 
     valid_transform = transforms.Compose([
@@ -77,8 +77,8 @@ def get_train_valid_loader(
 def get_test_loader(data_dir, batch_size, shuffle = True) :
     normalize = transforms.Normalize(
 
-        mean = [0.485, 0.456, 0.406],
-        std = [0.229, 0.224, 0.225]
+        mean = [0.4914, 0.4822, 0.4465],
+        std = [0.2023, 0.1994, 0.2020]
 
     )
 
@@ -98,3 +98,157 @@ def get_test_loader(data_dir, batch_size, shuffle = True) :
     )
 
     return data_loader
+
+class AlexNet(nn.Module):
+
+    def __init__(self, num_classes = 10):
+        super(AlexNet, self).__init__()
+        self.layer1 = nn.Sequential(
+            nn.Conv2d(3, 96, kernel_size = 11, stride = 4, padding = 2),
+            nn.BatchNorm2d(96),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size = 3, stride = 2)
+        )
+        self.layer2 = nn.Sequential(
+            nn.Conv2d(96, 256, kernel_size = 5, stride = 2, padding =2 ),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size = 3, stride = 2)
+        )
+        self.layer3 = nn.Sequential(
+            nn.Conv2d(256, 384, kernel_size = 3, stride = 1, padding = 1),
+            nn.BatchNorm2d(384),
+            nn.ReLU()
+        )
+        self.layer4 = nn.Sequential(
+            nn.Conv2d(384, 384, kernel_size = 3, stride = 1, padding = 1),
+            nn.BatchNorm2d(384),
+            nn.ReLU()
+        )
+        self.layer5 = nn.Sequential(
+            nn.Conv2d(384, 256, kernel_size = 3, stride = 1, padding = 1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size = 3, stride = 2)
+        )
+        self.fc = nn.Sequential(
+            nn.Dropout(0.5),
+            nn.Linear(9216, 4096),
+            nn.ReLU()
+        )
+        self.fc1 = nn.Sequential(
+            nn.Dropout(0.5),
+            nn.Linear(4096, 4096),
+            nn.ReLU()
+        )
+        self.fc2 = nn.Sequential(
+            nn.Linear(4096, num_classes)
+        )
+
+    def forward(self, x):
+        out = self.layer1(x)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = self.layer4(out)
+        out = self.layer5(out)
+        out = out.reshape(out.size(0), -1)
+        out = self.fc(out)
+        out = self.fc1(out)
+        out = self.fc2(out)
+        return out
+    
+
+def train(model, train_loader, valid_loader, criterion, optimizer, num_epochs, device):
+    
+
+    best_acc = 0.0
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience = 3)
+
+    for epoch in range(num_epochs):
+
+        model.train() #training phase
+        running_loss = 0.0
+        for i, (images, labels) in enumerate(train_loader):
+            images = images.to(device)
+            labels = labels.to(device)
+
+            optimizer.zero_grad()
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+            running_loss += loss.item()
+
+            if (i + 1) %100 == 0:
+                print(f'epoch [{epoch + 1} / {num_epochs}], step [{i + 1}/ {len(train_loader)}]'
+                      f'loss : {running_loss / 100: .4f}')
+                
+                running_loss = 0.0
+
+        #validation phase
+        model.eval()
+        valid_loss = 0.0
+        correct = 0
+        total = 0
+
+        with torch.no_grad():
+
+            for images, labels in valid_loader:
+                images = images.to(device)
+                labels = labels.to(device)
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                valid_loss += loss.item()
+
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size()
+                correct += (predicted == labels).sum().item()
+
+        
+        valid_acc = 100 * correct / total
+        valid_loss = valid_loss / len(valid_loader)
+        print(f'validation accuracy: {valid_acc:.2f}%, Loss: {valid_loss:.4f}')
+
+
+
+        scheduler.stop(valid_loss)
+
+        if valid_acc > best_acc:
+            best_acc = valid_acc
+            torch.save(model.state_dict(), 'best_model.pth')
+
+        
+    
+
+def main():
+
+
+
+    num_classes = 10
+    num_epochs = 20
+    batch_size = 64
+    learning_rate = 0.005
+
+    train_loader, valid_loader = get_train_valid_loader(data_dor = './data', augment = False, random_seed = 1)
+    test_loader = get_test_loader(data_dir = './data', batch_size = 64)
+
+    model = AlexNet(num_classes).to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr = learning_rate, weight_decay = 0.005, momentum = 0.9)
+
+    total_step = len(train_loader)
+
+    train(model, train_loader, valid_loader, criterion, optimizer, num_epochs, device)
+
+
+if __name__ == "__main__":
+
+    main()
+
+    
+            
+
+
+
+    
