@@ -47,12 +47,12 @@ class AdamOptimizer {
                 
             }
 
-            double beta1_correction = 1.0 - std::pow(beta1, t);
+            double beta1_correction = 1.0 - std::pow(beta1, t); 
 
             std::vector<double> m_hat(params.size()); //m_hat vector init
             for (size_t i = 0; i < params.size(); i ++) {
 
-                m_hat[i] = m[i] / beta1_correction;
+                m_hat[i] = m[i] / beta1_correction; 
 
             }
 
@@ -98,3 +98,32 @@ class AdamOptimizer {
         }
 
 };
+
+/*
+    notes on convergence analysis:
+    regret: sum of all prev differences between f(theta_t) (stepwise prediction) and f(theta_*) (best solution in hindsight)
+
+    convex loss functions: (f(y) - f(x)) / (y-x) >= f'(x) always stays above the gradient
+
+    gradient upper bound : ||gt||_2 <= G ||gt||_inf <= G_inf
+
+    lemma 10.2: sum sqrt(gt,i^2/t) <= 2G_inf ||g1:T,i||_2  (proof by induction)
+
+    lemma 10.4: sum m_hat^2/sqrt(t*v_hat) <= 2/(1- gamma) (1/sqrt(1 - beta2)||g1:t||_2)
+
+    rearrange sum m_hat^2/sqrt(t*v_hat) using algorithm 1 and apply inequality sqrt(1-b2^t)/(1-b1^t)^2 <= 1/(1-b1)^2
+        
+
+    side notes on convergence: 
+
+            uniform convergence (same N for all x) > locally uniform convergence (same N for a compact susbet of x) 
+            > pointwise convergence (fn->f for each x individually) 
+            > almost uniform convergence (uniform except on a set of arbitrary small measure)
+            > almost everywhere convergence (point wise except on measure zero sets)
+        
+
+ 
+
+
+
+*/
