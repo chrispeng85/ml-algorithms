@@ -4,9 +4,9 @@
 #include <math.h>
 #include "definitions.h"
 
-LeNet* create_lenet(void) {
+LeNet* create_lenet(void) {  //pointer for dynamically allocated struct
 
-    LeNet* net = (LeNet*)malloc(sizeof(LeNet));
+    LeNet* net = (LeNet*)malloc(sizeof(LeNet)); //dynamically allocate memory for large struct 
     if (!net) return NULL;
 
     net->conv1.weights = (float*)malloc(CONV1_FILTERS * INPUT_CHANNELS * CONV1_KERNEL_SIZE * CONV1_KERNEL_SIZE * sizeof(float)); //initialize weights
