@@ -278,6 +278,33 @@ void attention_forward(MultiHeadAttention* mha, float* input, float* output, int
 
 /*
 
+
+    what is attention?
+
+        weighted average of sequence elements with the weights dynamically computed based on an input query and elements' keys
+
+        -dynamically decide which input we "attend to" more than others
+
+        -query: feature vector, what we want to pay attention to
+        -key: again a feature vector, describes when the element is important
+        -value: feature vector, we want to average over
+        -score function: takes query,key as input and outputs score/attention weight of the query-key pair
+
+
+    input sequence -> encoder -> context vector -> decoder -> desired output
+
+    context vector: weighted sum of values, where the weight is computed by a compatibity function
+
+
+    
+
+
+*/
+
+
+
+/*
+
     multi head attention:
 
         runs attention mechanism several times in parellel
@@ -374,7 +401,12 @@ void attention_forward(MultiHeadAttention* mha, float* input, float* output, int
 
                 conversely: if f is flat and spread-out, it would take more samples of X to estimate correct value of theta
 
-                score: partial derivative of the natural log of the likelihood function w.r.t theta
+                score: partial derivative of the natural log of the likelihood function w.r.t theta or the parameter in question
+                    -indicates the sensitivity of change towards the parameter in question
+
+                    -vanish at local maximum/minimum, this fact is used in maximum likelihood estimation
+
+
 
                 E[d/dtheta logf(x, theta) | theta] = \int (d\dtheta f(x, theta) / f(x, theta)* f(x, theta) dx )  (d/dx log = 1/x)
                 
@@ -382,15 +414,43 @@ void attention_forward(MultiHeadAttention* mha, float* input, float* output, int
                 = d/dtheta 1  if evaluated at true theta
                 = 0
 
-                that is, expected value of the score evaluated at true theta is 0
+                that is, expected value of the score evaluated at true theta is 0, or that it "vanishes" 
 
 
-                fisher information is variance of the score:asm
 
-                I(theta) = E[]
-            
+
+                fisher information is variance of the score:
+
+                I(theta) = E[d/dtheta log f(x, theta)^2 | theta] = \int (d/dtheta log f(x, theta)^2 f(x, theta) dx )
+
+                if log f(x, theta) twice differenciable:
+
+                I(theta) = -E[d^2/dtheta^2 logf(x, theta) | theta],
+
+                that is:
+
+                    second moment = derivative of first moment 
+                                  = d/dtheta (d/dtheta f * (1/f))
+                                  = d^2/dtheta^2 f * (1/f) + d/dtheta f * d/dtheta (f^(-1))
+                                  = d^2/dtheta^2 f/f + d/dtheta f * (-1)f^(-2) d/dtheta f
+                                  = d^2/dtheta^2 f/f - (d/dtheta f)^2 f^(-2)
+
+                    E(second moment) = E[d&2/dtheta^2 f/f] - E[(d/dthetaf)^2 f^(-2)] 
+
+                        and E[d^2/dtheta^2 f/f|theta] = d/dtheta \int f dx = 0
+
+                    
+                    so I(theta) = -E[(d/dtheta/f)^2]
+
+                    can be seen as the curvature of the support curve
+
+                    that is: near the local maximum, low fisher information indicates multiple similar values to the local max,
+                        while high fisher information indicates a local max that is easy to identify
+
+                                
 
             e.g.: generalized linear model (GLM):
+
 
 
 
