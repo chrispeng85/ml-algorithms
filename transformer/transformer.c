@@ -312,6 +312,91 @@ void attention_forward(MultiHeadAttention* mha, float* input, float* output, int
         mu_i = E[a_i]
         sigma_i = sqrt(E[(a_i - mu_i)^2])
 
+        where g_i is a gain parameter 
+
+        normalized across a mini-batch
+
+        better in CNN and computer vision tasks
+
+
+    covariate shift: change in output of one layer significantly impacts that of the next layer
+
+    mu = 1/H \sum a_i 
+    sigma = sqrt(1/H \sum (a_i - mu))
+
+    where H is the number of hidden units in a layer
+
+        normalized across a layer
+        better for NLP tasks
+    
+    in RNN: 
+        normalization terms:
+
+            h^t = f[g/(sigma^t) * (a^t - mu^t) + b ]
+                (note that * here represents element wise multiplication between vectors)
+            mu^t = 1/H (\sum a_i^t) 
+            sigma^t = sqrt(1/H \sum (a_i^t - mu^t)^2) 
+
+            b and g are bias and gain parameters
+
+    
+    
+    batch and weight normalization are invariant to rescaling of weights
+    layer norm is not so
+
+    layer norm is invariant to weight matrix scaling
+
+
+    Riemannian matric:
+
+            the learable parameters of a statistical model for a smooth manifold
+            measure of separation of two points on a manifold is the Kullback-Leibler divergence
+
+            the parameter space is a riemannian manifold
+
+            curvature of a manifold is captured by Riemannian metric ds^2
+
+
+            ds^2 under KL is well approximated under second order taylor expansion using Fisher information matrix
+
+
+            ds^2 = Dkl[P(y|x; theta)|| P(y|x; theta + delta)] ~= 1/2 delta^TF(theta)delta
+
+            F(theta) = E[(dlogP(y|x; theta)/dtheta dlogP(y|x; theta)/dtheta)]
+
+            where delta is a small change to parameters.
+
+            fisher information:
+
+                f(x:theta): pdf of x conditioned on unknown parameter theta
+
+                sharply peaked f regarding change of theta indicates correct theta
+
+                conversely: if f is flat and spread-out, it would take more samples of X to estimate correct value of theta
+
+                score: partial derivative of the natural log of the likelihood function w.r.t theta
+
+                E[d/dtheta logf(x, theta) | theta] = \int (d\dtheta f(x, theta) / f(x, theta)* f(x, theta) dx )  (d/dx log = 1/x)
+                
+                = d\dtheta \int(f(x, theta))dx
+                = d/dtheta 1  if evaluated at true theta
+                = 0
+
+                that is, expected value of the score evaluated at true theta is 0
+
+
+                fisher information is variance of the score:asm
+
+                I(theta) = E[]
+            
+
+            e.g.: generalized linear model (GLM):
+
+
+
+
+
+
     
 
 
